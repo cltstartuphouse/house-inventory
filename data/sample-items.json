@@ -1,0 +1,42 @@
+[
+  {
+    "id": "item-001",
+    "name": "Blue cooler",
+    "home": "A1",
+    "room": "Storage closet",
+    "quantity": 1,
+    "checkedOutFor": null
+  },
+  {
+    "id": "item-002",
+    "name": "Extension cord",
+    "home": "A2",
+    "room": "Storage closet",
+    "quantity": 4,
+    "checkedOutFor": "Sample Demo Night"
+  },
+  {
+    "id": "item-003",
+    "name": "Folding table",
+    "home": "B1",
+    "room": "Back hallway",
+    "quantity": 6,
+    "checkedOutFor": null
+  },
+  {
+    "id": "item-004",
+    "name": "Paper plates (pack)",
+    "home": "C1",
+    "room": "Kitchen pantry",
+    "quantity": 3,
+    "checkedOutFor": null
+  },
+  {
+    "id": "item-005",
+    "name": "Ground coffee (bag)",
+    "home": "C2",
+    "room": "Kitchen pantry",
+    "quantity": 2,
+    "checkedOutFor": null
+  }
+]

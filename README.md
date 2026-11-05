@@ -30,7 +30,32 @@ Two coolers, a yellow bin, the canopy, speakers, mics, cables, banners, folding 
 
 ## Stack
 
-Chosen by the room in issue #1. Write it here when it lands, along with how to run the app locally.
+[React](https://react.dev), [TypeScript](https://www.typescriptlang.org) and [Vite](https://vite.dev). Data starts as a local JSON file, with no hosted database.
+
+### Run it locally
+
+You need [Node.js](https://nodejs.org) 22.12 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+Then open the URL it prints, usually http://localhost:5173.
+
+### Where things go
+
+| Folder | What goes there |
+| --- | --- |
+| `src/features/` | One folder per feature: items, homes, checkouts, low stock, checklists |
+| `src/components/` | UI shared between features |
+| `src/lib/` | Storage and helpers |
+| `src/types/` | Shared TypeScript types |
+| `data/` | Made-up sample data |
+| `docs/` | Written docs, including `docs/checklists/` |
+| `public/` | Static files served as they are |
+
+Run `npm run build` and `npm run lint` before you open a pull request.
 
 ## Rules for this repo
 
