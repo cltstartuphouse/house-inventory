@@ -1,0 +1,46 @@
+# Secrets and local config. Never commit these.
+.env
+.env.*
+!.env.example
+*.local.*
+*.local
+secrets.*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and builds
+node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Arduino and firmware builds
+*.hex
+*.elf
+*.bin
+.pio/
+build-*/
+
+# Local data, photos and recordings
+data/local/
+photos/
+recordings/
+*.mp4
+*.mov
+*.wav
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp

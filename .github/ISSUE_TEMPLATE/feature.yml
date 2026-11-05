@@ -1,0 +1,26 @@
+name: Idea or feature
+description: Something the house should be able to do
+labels: ["idea"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What should it do?
+      description: Describe it from the point of view of someone at the house.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does the house need it?
+  - type: dropdown
+    id: level
+    attributes:
+      label: Who could build it?
+      options:
+        - Beginner
+        - Intermediate
+        - Advanced
+        - Not sure
+    validations:
+      required: true

@@ -1,0 +1,19 @@
+name: Something's broken
+description: Report a bug
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+  - type: textarea
+    id: steps
+    attributes:
+      label: How do we see it?
+      description: Steps to reproduce. Please don't paste keys, passwords or personal information.
