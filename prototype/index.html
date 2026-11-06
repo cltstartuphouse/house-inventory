@@ -4,138 +4,174 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kitchen inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=PT+Serif:wght@700&display=swap">
 <style>
+  :root {
+    --cream: #FAF8F8;
+    --ink: #1A1A1A;
+    --powder: #D4B8B8;       /* buttons and section headers */
+    --powder-dark: #B89A9A;  /* borders and pressed states */
+    --pink-text: #8A6A6A;    /* the only pink allowed for small or body text */
+    --hairline: rgba(184, 154, 154, 0.35);
+    --serif: "PT Serif", Georgia, serif;
+    --sans: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--sans);
     font-size: 16px;
-    line-height: 1.4;
-    color: #1c1c1c;
-    background: #f5f5f3;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--cream);
+    -webkit-text-size-adjust: 100%;
   }
   main {
-    max-width: 640px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 16px 16px 48px;
+    padding: 24px 16px 64px;
   }
-  h1 { font-size: 1.5rem; margin: 8px 0 4px; }
-  .sub { margin: 0 0 16px; color: #555; }
-  h2 { font-size: 1.1rem; margin: 0 0 8px; }
+  h1, h2 { font-family: var(--serif); font-weight: 700; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 1.15rem; line-height: 1.25; margin: 0; }
+  .sub { margin: 0 0 24px; color: var(--pink-text); }
 
+  /* Cards */
   .panel {
     background: #fff;
-    border: 1px solid #d9d9d5;
-    border-radius: 8px;
-    padding: 12px 14px;
-    margin-bottom: 16px;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 6px 18px rgba(26, 26, 26, 0.06);
+    margin-bottom: 20px;
+    overflow: hidden;
   }
+  .card-head, .spot-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--powder);
+  }
+  .card-head { justify-content: space-between; }
+  .card-body { padding: 2px 16px; }
 
-  #restock { border-left: 5px solid #b45309; }
-  #restock.clear { border-left-color: #2f6f3e; }
-  #checkedout { border-left: 5px solid #1d4ed8; }
-  #checkedout.clear { border-left-color: #b5b5b0; }
+  /* Summary cards at the top */
+  .summaries { display: grid; gap: 16px; margin-bottom: 24px; }
+  .summaries .panel { margin-bottom: 0; }
+  .count {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-family: var(--serif);
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .summary.clear .count { background: #fff; color: var(--ink); }
   .summary ul { list-style: none; margin: 0; padding: 0; }
   .summary li {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    padding: 6px 0;
-    border-top: 1px solid #eee;
+    padding: 10px 0;
+    border-top: 1px solid var(--hairline);
   }
   .summary li:first-child { border-top: 0; }
-  .where { color: #555; font-size: 0.9rem; }
+  .where { color: var(--pink-text); font-size: 0.9rem; }
   .tag {
     flex: none;
     align-self: center;
     font-size: 0.85rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 4px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
   }
-  .tag.low { background: #fdecc8; color: #7a4a00; }
-  .tag.out { background: #fbd5d5; color: #8a1c1c; }
-  .empty { margin: 0; color: #555; }
+  .tag.low { background: var(--powder-dark); color: var(--ink); }
+  .tag.out { background: var(--ink); color: var(--cream); }
+  .empty { margin: 0; padding: 12px 0; }
 
-  label[for="search"] { display: block; font-weight: 600; margin-bottom: 4px; }
-  #search {
+  /* Search */
+  label[for="search"] { display: block; font-weight: 700; margin-bottom: 6px; }
+  #search, .take-form input {
     width: 100%;
     font-size: 16px;
-    padding: 10px 12px;
-    border: 1px solid #b5b5b0;
-    border-radius: 8px;
-    margin-bottom: 16px;
+    font-family: inherit;
+    color: var(--ink);
+    padding: 12px 14px;
+    border: 1.5px solid var(--powder-dark);
+    border-radius: 12px;
     background: #fff;
   }
+  #search { margin-bottom: 24px; }
+  #search::placeholder, .take-form input::placeholder { color: var(--pink-text); opacity: 1; }
 
-  .spot-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  /* Spot cards */
   .label {
     flex: none;
+    font-size: 0.8rem;
     font-weight: 700;
-    background: #1c1c1c;
-    color: #fff;
-    padding: 2px 8px;
-    border-radius: 4px;
+    line-height: 1.4;
+    background: #fff;
+    color: var(--ink);
+    padding: 2px 10px;
+    border: 1px solid var(--powder-dark);
+    border-radius: 999px;
   }
-  .spot-head h2 { margin: 0; }
-
-  .item { padding: 10px 0; border-top: 1px solid #eee; }
-  .item-name { margin-bottom: 6px; }
+  .item { padding: 14px 16px; border-top: 1px solid var(--hairline); }
+  .spot-head + .item { border-top: 0; }
+  .item-name { font-weight: 600; margin-bottom: 8px; }
   .item-main .item-name { margin-bottom: 0; }
-  .asset-detail { color: #555; font-size: 0.9rem; }
-  .asset-detail.out { color: #1e3a8a; font-weight: 600; }
-  .action {
-    width: 100%;
-    min-height: 44px;
-    margin-top: 8px;
-    padding: 0 16px;
-    font-size: 15px;
-    font-family: inherit;
-    color: #1c1c1c;
-    background: #fff;
-    border: 1px solid #b5b5b0;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .action.primary { color: #fff; background: #1c1c1c; border-color: #1c1c1c; }
-  .take-form { margin-top: 8px; }
-  .take-form label { display: block; font-weight: 600; margin-bottom: 4px; }
-  .take-form input {
-    width: 100%;
-    font-size: 16px;
-    font-family: inherit;
-    padding: 10px 12px;
-    border: 1px solid #b5b5b0;
-    border-radius: 8px;
-    background: #fff;
-  }
-  .take-form .hint { margin: 4px 0 0; color: #555; font-size: 0.9rem; }
-  .form-buttons { display: flex; gap: 6px; }
-  .form-buttons .action { flex: 1; }
-  .buttons { display: flex; gap: 6px; }
-  .buttons button {
-    flex: 1;
-    min-height: 44px;
-    font-size: 15px;
-    font-family: inherit;
-    color: #1c1c1c;
-    background: #fff;
-    border: 1px solid #b5b5b0;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .buttons button[aria-pressed="true"] { font-weight: 700; border-width: 2px; }
-  .buttons button.stocked[aria-pressed="true"] { background: #d8ecdc; border-color: #2f6f3e; color: #1d4a28; }
-  .buttons button.low[aria-pressed="true"] { background: #fdecc8; border-color: #b45309; color: #7a4a00; }
-  .buttons button.out[aria-pressed="true"] { background: #fbd5d5; border-color: #b42318; color: #8a1c1c; }
-  .buttons button:focus-visible, .action:focus-visible, .take-form input:focus-visible, #search:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+  .asset-detail { color: var(--pink-text); font-size: 0.9rem; }
+  .asset-detail.out { color: var(--ink); font-weight: 700; }
 
-  @media (min-width: 520px) {
-    .item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  /* Buttons: outlined by default, filled when selected */
+  .buttons button, .action {
+    min-height: 44px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    background: #fff;
+    border: 1.5px solid var(--powder-dark);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .buttons { display: flex; gap: 8px; }
+  .buttons button { flex: 1; padding: 0 6px; }
+  .buttons button:active, .action:active, .action.primary:active { background: var(--powder-dark); }
+  .buttons button[aria-pressed="true"] { font-weight: 700; }
+  .buttons button.stocked[aria-pressed="true"] { background: var(--powder); }
+  .buttons button.low[aria-pressed="true"] { background: var(--powder-dark); }
+  .buttons button.out[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+
+  .action { width: 100%; margin-top: 10px; padding: 0 18px; }
+  .action.primary { background: var(--powder); }
+
+  .take-form { margin-top: 10px; }
+  .take-form label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .take-form .hint { margin: 6px 0 0; color: var(--pink-text); font-size: 0.9rem; }
+  .form-buttons { display: flex; gap: 8px; }
+  .form-buttons .action { flex: 1; }
+
+  .buttons button:focus-visible, .action:focus-visible, .take-form input:focus-visible, #search:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 620px) {
+    .summaries { grid-template-columns: 1fr 1fr; align-items: start; }
+    .item { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .item-name { margin-bottom: 0; }
-    .buttons { flex: none; width: 260px; }
+    .buttons { flex: none; width: 280px; }
     .item-main { flex: 1; min-width: 0; }
-    .item > .action { flex: none; width: 140px; margin-top: 0; }
+    .item > .action { flex: none; width: 150px; margin-top: 0; }
     .item.asking { display: block; }
   }
 </style>
@@ -145,15 +181,23 @@
   <h1>Kitchen inventory</h1>
   <p class="sub">Tap Stocked, Low or Out for supplies. Tap Take it to check out anything else.</p>
 
-  <section id="restock" class="panel summary" aria-live="polite">
-    <h2>Needs restocking</h2>
-    <div id="restock-body"></div>
-  </section>
+  <div class="summaries">
+    <section id="restock" class="panel summary" aria-live="polite">
+      <div class="card-head">
+        <h2>Needs restocking</h2>
+        <span id="restock-count" class="count">0</span>
+      </div>
+      <div id="restock-body" class="card-body"></div>
+    </section>
 
-  <section id="checkedout" class="panel summary" aria-live="polite">
-    <h2>Checked out now</h2>
-    <div id="checkedout-body"></div>
-  </section>
+    <section id="checkedout" class="panel summary" aria-live="polite">
+      <div class="card-head">
+        <h2>Checked out now</h2>
+        <span id="checkedout-count" class="count">0</span>
+      </div>
+      <div id="checkedout-body" class="card-body"></div>
+    </section>
+  </div>
 
   <label for="search">Search items</label>
   <input id="search" type="search" placeholder="Type an item name" autocomplete="off">
@@ -298,6 +342,7 @@
     // Out comes before Low.
     needed.sort(function (a, b) { return (a.status === "Out" ? 0 : 1) - (b.status === "Out" ? 0 : 1); });
 
+    document.getElementById("restock-count").textContent = needed.length;
     panel.classList.toggle("clear", needed.length === 0);
     if (needed.length === 0) {
       body.appendChild(el("p", "empty", "Nothing right now. Everything is stocked."));
@@ -328,6 +373,7 @@
     // Longest out comes first.
     out.sort(function (a, b) { return a.checked_out_at < b.checked_out_at ? -1 : a.checked_out_at > b.checked_out_at ? 1 : 0; });
 
+    document.getElementById("checkedout-count").textContent = out.length;
     panel.classList.toggle("clear", out.length === 0);
     if (out.length === 0) {
       body.appendChild(el("p", "empty", "Nothing is checked out."));
