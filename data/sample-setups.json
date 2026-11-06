@@ -1,0 +1,31 @@
+[
+  {
+    "id": "small-dinner",
+    "name": "Small dinner",
+    "baseGuests": 8,
+    "lines": [
+      { "itemId": "folding-table", "quantity": 1, "placeIn": "E", "scales": true },
+      { "itemId": "folding-chair", "quantity": 8, "placeIn": "E", "scales": true },
+      { "itemId": "paper-plates", "quantity": 1, "placeIn": "J", "scales": true },
+      { "itemId": "forks", "quantity": 1, "placeIn": "J", "scales": true },
+      { "itemId": "napkins", "quantity": 1, "placeIn": "J", "scales": true },
+      { "itemId": "coffee", "quantity": 1, "placeIn": "J", "scales": true },
+      { "itemId": "trash-bags", "quantity": 1, "placeIn": "J", "scales": false }
+    ]
+  },
+  {
+    "id": "demo-night",
+    "name": "Demo night",
+    "baseGuests": 30,
+    "lines": [
+      { "itemId": "high-top-table", "quantity": 4, "placeIn": "C", "scales": true },
+      { "itemId": "folding-chair", "quantity": 16, "placeIn": "E", "scales": true },
+      { "itemId": "speaker", "quantity": 2, "placeIn": "E", "scales": false },
+      { "itemId": "microphone", "quantity": 2, "placeIn": "E", "scales": false },
+      { "itemId": "audio-cable", "quantity": 2, "placeIn": "E", "scales": false },
+      { "itemId": "cooler", "quantity": 2, "placeIn": "A", "scales": false },
+      { "itemId": "coffee", "quantity": 3, "placeIn": "J", "scales": true },
+      { "itemId": "paper-plates", "quantity": 3, "placeIn": "J", "scales": true }
+    ]
+  }
+]
