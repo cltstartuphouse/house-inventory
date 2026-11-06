@@ -33,15 +33,17 @@
 
   #restock { border-left: 5px solid #b45309; }
   #restock.clear { border-left-color: #2f6f3e; }
-  #restock ul { list-style: none; margin: 0; padding: 0; }
-  #restock li {
+  #checkedout { border-left: 5px solid #1d4ed8; }
+  #checkedout.clear { border-left-color: #b5b5b0; }
+  .summary ul { list-style: none; margin: 0; padding: 0; }
+  .summary li {
     display: flex;
     justify-content: space-between;
     gap: 12px;
     padding: 6px 0;
     border-top: 1px solid #eee;
   }
-  #restock li:first-child { border-top: 0; }
+  .summary li:first-child { border-top: 0; }
   .where { color: #555; font-size: 0.9rem; }
   .tag {
     flex: none;
@@ -79,7 +81,37 @@
 
   .item { padding: 10px 0; border-top: 1px solid #eee; }
   .item-name { margin-bottom: 6px; }
-  .asset-spot { color: #555; font-size: 0.9rem; }
+  .item-main .item-name { margin-bottom: 0; }
+  .asset-detail { color: #555; font-size: 0.9rem; }
+  .asset-detail.out { color: #1e3a8a; font-weight: 600; }
+  .action {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 8px;
+    padding: 0 16px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #1c1c1c;
+    background: #fff;
+    border: 1px solid #b5b5b0;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .action.primary { color: #fff; background: #1c1c1c; border-color: #1c1c1c; }
+  .take-form { margin-top: 8px; }
+  .take-form label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .take-form input {
+    width: 100%;
+    font-size: 16px;
+    font-family: inherit;
+    padding: 10px 12px;
+    border: 1px solid #b5b5b0;
+    border-radius: 8px;
+    background: #fff;
+  }
+  .take-form .hint { margin: 4px 0 0; color: #555; font-size: 0.9rem; }
+  .form-buttons { display: flex; gap: 6px; }
+  .form-buttons .action { flex: 1; }
   .buttons { display: flex; gap: 6px; }
   .buttons button {
     flex: 1;
@@ -96,24 +128,31 @@
   .buttons button.stocked[aria-pressed="true"] { background: #d8ecdc; border-color: #2f6f3e; color: #1d4a28; }
   .buttons button.low[aria-pressed="true"] { background: #fdecc8; border-color: #b45309; color: #7a4a00; }
   .buttons button.out[aria-pressed="true"] { background: #fbd5d5; border-color: #b42318; color: #8a1c1c; }
-  .buttons button:focus-visible, #search:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+  .buttons button:focus-visible, .action:focus-visible, .take-form input:focus-visible, #search:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 
   @media (min-width: 520px) {
     .item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .item-name { margin-bottom: 0; }
     .buttons { flex: none; width: 260px; }
-    .asset-spot { flex: none; text-align: right; }
+    .item-main { flex: 1; min-width: 0; }
+    .item > .action { flex: none; width: 140px; margin-top: 0; }
+    .item.asking { display: block; }
   }
 </style>
 </head>
 <body>
 <main>
   <h1>Kitchen inventory</h1>
-  <p class="sub">Tap Stocked, Low or Out for supplies. Other items show where they live.</p>
+  <p class="sub">Tap Stocked, Low or Out for supplies. Tap Take it to check out anything else.</p>
 
-  <section id="restock" class="panel" aria-live="polite">
+  <section id="restock" class="panel summary" aria-live="polite">
     <h2>Needs restocking</h2>
     <div id="restock-body"></div>
+  </section>
+
+  <section id="checkedout" class="panel summary" aria-live="polite">
+    <h2>Checked out now</h2>
+    <div id="checkedout-body"></div>
   </section>
 
   <label for="search">Search items</label>
@@ -125,61 +164,67 @@
 <script>
   // Copied from data/kitchen.json so this page works without a server.
   var ITEMS = [
-    { id: "k1-trash-bags-13-gal", name: "Trash bags 13 gal", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked" },
-    { id: "k1-lysol-wipes", name: "Lysol wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked" },
-    { id: "k1-disinfecting-wipes", name: "Disinfecting wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked" },
-    { id: "k1-dish-soap", name: "Dish soap", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked" },
-    { id: "k1-dishwasher-pacs", name: "Dishwasher pacs", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked" },
-    { id: "k2-toilet-paper", name: "Toilet paper", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked" },
-    { id: "k2-paper-towels", name: "Paper towels", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked" },
-    { id: "k2-dinner-napkins", name: "Dinner napkins", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked" },
-    { id: "k2-foil-pans", name: "Foil pans", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked" },
-    { id: "k2-foil", name: "Foil", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked" },
-    { id: "k2-knife-block", name: "Knife block", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "asset", status: "Available" },
-    { id: "k3-colonial-signature-blend-packs", name: "Colonial Signature Blend packs", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked" },
-    { id: "k3-lion-toasted-coconut-coffee", name: "Lion Toasted Coconut coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked" },
-    { id: "k3-open-bag-of-coffee", name: "Open bag of coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked" },
-    { id: "k3-rishi-turmeric-ginger-tea", name: "Rishi Turmeric Ginger tea", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked" },
-    { id: "k4-hot-cups", name: "Hot cups", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-cup-lids", name: "Cup lids", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-bigelow-earl-grey", name: "Bigelow Earl Grey", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-bigelow-english-teatime", name: "Bigelow English Teatime", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-bigelow-lemon-lift", name: "Bigelow Lemon Lift", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-bigelow-green-tea", name: "Bigelow Green Tea", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-rishi-earl-grey", name: "Rishi Earl Grey", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-sugar-packets", name: "Sugar packets", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-raw-sugar", name: "Raw sugar", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-splenda", name: "Splenda", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k4-stir-sticks", name: "Stir sticks", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked" },
-    { id: "k5-quilted-napkins", name: "Quilted napkins", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked" },
-    { id: "k5-lunch-napkins", name: "Lunch napkins", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked" },
-    { id: "k5-plastic-spoons", name: "Plastic spoons", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked" },
-    { id: "k5-plastic-forks", name: "Plastic forks", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked" },
-    { id: "k5-black-plastic-utensils", name: "Black plastic utensils", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked" },
-    { id: "k5-everyday-500-count-pack", name: "Everyday 500-count pack", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked" },
-    { id: "k6-sony-tv-remote", name: "Sony TV remote", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available" },
-    { id: "k6-second-tv-remote", name: "Second TV remote", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available" },
-    { id: "k6-long-lighter", name: "Long lighter", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available" },
-    { id: "k6-water-dispenser-manual", name: "Water dispenser manual", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available" },
-    { id: "k7-dinner-plates", name: "Dinner plates", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available" },
-    { id: "k7-salad-plates", name: "Salad plates", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available" },
-    { id: "k7-serving-platters", name: "Serving platters", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available" },
-    { id: "k7-salt-and-pepper-shakers", name: "Salt and pepper shakers", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available" },
-    { id: "k8-stemless-wine-glasses", name: "Stemless wine glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available" },
-    { id: "k8-blue-pressed-glasses", name: "Blue pressed glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available" },
-    { id: "k8-amber-pressed-glasses", name: "Amber pressed glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available" },
-    { id: "k9-mug-tree-with-mugs", name: "Mug tree with mugs", room: "Kitchen", spot: "Counter", spot_label: "K9", type: "asset", status: "Available" },
-    { id: "k9-microwave", name: "Microwave", room: "Kitchen", spot: "Counter", spot_label: "K9", type: "asset", status: "Available" },
-    { id: "k10-sparkling-water-lime", name: "Sparkling water lime", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked" },
-    { id: "k10-sparkling-water-grapefruit", name: "Sparkling water grapefruit", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked" },
-    { id: "k10-sparkling-water-lemon", name: "Sparkling water lemon", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked" },
-    { id: "k10-coke", name: "Coke", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked" }
+    { id: "k1-trash-bags-13-gal", name: "Trash bags 13 gal", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-lysol-wipes", name: "Lysol wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-disinfecting-wipes", name: "Disinfecting wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-dish-soap", name: "Dish soap", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-dishwasher-pacs", name: "Dishwasher pacs", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-toilet-paper", name: "Toilet paper", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-paper-towels", name: "Paper towels", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-dinner-napkins", name: "Dinner napkins", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-foil-pans", name: "Foil pans", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-foil", name: "Foil", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-knife-block", name: "Knife block", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k3-colonial-signature-blend-packs", name: "Colonial Signature Blend packs", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k3-lion-toasted-coconut-coffee", name: "Lion Toasted Coconut coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k3-open-bag-of-coffee", name: "Open bag of coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k3-rishi-turmeric-ginger-tea", name: "Rishi Turmeric Ginger tea", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-hot-cups", name: "Hot cups", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-cup-lids", name: "Cup lids", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-earl-grey", name: "Bigelow Earl Grey", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-english-teatime", name: "Bigelow English Teatime", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-lemon-lift", name: "Bigelow Lemon Lift", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-green-tea", name: "Bigelow Green Tea", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-rishi-earl-grey", name: "Rishi Earl Grey", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-sugar-packets", name: "Sugar packets", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-raw-sugar", name: "Raw sugar", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-splenda", name: "Splenda", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-stir-sticks", name: "Stir sticks", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-quilted-napkins", name: "Quilted napkins", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-lunch-napkins", name: "Lunch napkins", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-plastic-spoons", name: "Plastic spoons", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-plastic-forks", name: "Plastic forks", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-black-plastic-utensils", name: "Black plastic utensils", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-everyday-500-count-pack", name: "Everyday 500-count pack", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k6-sony-tv-remote", name: "Sony TV remote", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k6-second-tv-remote", name: "Second TV remote", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k6-long-lighter", name: "Long lighter", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k6-water-dispenser-manual", name: "Water dispenser manual", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-dinner-plates", name: "Dinner plates", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-salad-plates", name: "Salad plates", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-serving-platters", name: "Serving platters", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-salt-and-pepper-shakers", name: "Salt and pepper shakers", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k8-stemless-wine-glasses", name: "Stemless wine glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k8-blue-pressed-glasses", name: "Blue pressed glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k8-amber-pressed-glasses", name: "Amber pressed glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k9-mug-tree-with-mugs", name: "Mug tree with mugs", room: "Kitchen", spot: "Counter", spot_label: "K9", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k9-microwave", name: "Microwave", room: "Kitchen", spot: "Counter", spot_label: "K9", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k10-sparkling-water-lime", name: "Sparkling water lime", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k10-sparkling-water-grapefruit", name: "Sparkling water grapefruit", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k10-sparkling-water-lemon", name: "Sparkling water lemon", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k10-coke", name: "Coke", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null }
   ];
 
   var STATUSES = ["Stocked", "Low", "Out"];
   var STORAGE_KEY = "house-inventory.kitchen.status";
 
+  var CHECKOUT_KEY = "house-inventory.kitchen.checkouts";
+
   var query = "";
+  var askingId = null;     // the asset showing the "What's it for?" question, if any
+  var reasonDraft = "";    // what has been typed into that question so far
+  var pendingFocus = null; // which control to focus after the next redraw
+  var focusNode = null;
 
   // Saved statuses look like { "k1-dish-soap": "Low" }.
   function loadSaved() {
@@ -201,6 +246,38 @@
     } catch (e) {
       // Storage can be blocked in private windows. The page still works until refresh.
     }
+  }
+
+  // Saved check-outs look like
+  // { "k9-microwave": { "checked_out_for": "Thursday meetup", "checked_out_at": "2026-11-05T23:10:00.000Z" } }.
+  // An event or a reason only. Never a person's name.
+  function loadCheckouts() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || "{}");
+      return saved && typeof saved === "object" ? saved : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveCheckouts() {
+    var out = {};
+    ITEMS.forEach(function (item) {
+      if (item.type === "asset" && item.status === "Checked out") {
+        out[item.id] = { checked_out_for: item.checked_out_for, checked_out_at: item.checked_out_at };
+      }
+    });
+    try {
+      localStorage.setItem(CHECKOUT_KEY, JSON.stringify(out));
+    } catch (e) {
+      // Storage can be blocked in private windows. The page still works until refresh.
+    }
+  }
+
+  function formatTime(iso) {
+    var date = new Date(iso);
+    if (isNaN(date.getTime())) return "an unknown time";
+    return date.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
   function el(tag, className, text) {
@@ -240,7 +317,137 @@
     body.appendChild(list);
   }
 
+  function renderCheckedOut() {
+    var panel = document.getElementById("checkedout");
+    var body = document.getElementById("checkedout-body");
+    body.textContent = "";
+
+    var out = ITEMS.filter(function (item) {
+      return item.type === "asset" && item.status === "Checked out";
+    });
+    // Longest out comes first.
+    out.sort(function (a, b) { return a.checked_out_at < b.checked_out_at ? -1 : a.checked_out_at > b.checked_out_at ? 1 : 0; });
+
+    panel.classList.toggle("clear", out.length === 0);
+    if (out.length === 0) {
+      body.appendChild(el("p", "empty", "Nothing is checked out."));
+      return;
+    }
+
+    var list = el("ul");
+    out.forEach(function (item) {
+      var row = el("li");
+      var left = el("div");
+      left.appendChild(el("div", "", item.name));
+      left.appendChild(el("div", "where", "For " + item.checked_out_for));
+      left.appendChild(el("div", "where", "Since " + formatTime(item.checked_out_at)));
+      left.appendChild(el("div", "where", "Goes back to " + item.spot_label + " " + item.spot));
+      row.appendChild(left);
+      list.appendChild(row);
+    });
+    body.appendChild(list);
+  }
+
+  // The "What's it for?" question shown after tapping Take it.
+  function buildTakeForm(item) {
+    var form = el("form", "take-form");
+    var label = el("label", "", "What's it for?");
+    label.htmlFor = "reason-" + item.id;
+    var input = el("input");
+    input.id = "reason-" + item.id;
+    input.type = "text";
+    input.maxLength = 80;
+    input.required = true;
+    input.autocomplete = "off";
+    input.placeholder = "Thursday meetup";
+    input.value = reasonDraft;
+    input.addEventListener("input", function () { reasonDraft = input.value; });
+
+    var buttons = el("div", "form-buttons");
+    var take = el("button", "action primary", "Take it");
+    take.type = "submit";
+    var cancel = el("button", "action", "Cancel");
+    cancel.type = "button";
+    cancel.addEventListener("click", function () {
+      askingId = null;
+      reasonDraft = "";
+      pendingFocus = "action:" + item.id;
+      renderSpots();
+    });
+    buttons.appendChild(take);
+    buttons.appendChild(cancel);
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var reason = input.value.replace(/\s+/g, " ").trim();
+      if (!reason) {
+        input.focus();
+        return;
+      }
+      item.status = "Checked out";
+      item.checked_out_for = reason;
+      item.checked_out_at = new Date().toISOString();
+      askingId = null;
+      reasonDraft = "";
+      saveCheckouts();
+      pendingFocus = "action:" + item.id;
+      render();
+    });
+
+    form.appendChild(label);
+    form.appendChild(input);
+    form.appendChild(el("p", "hint", "An event or a reason, like Thursday meetup or Back room TV. No people's names."));
+    form.appendChild(buttons);
+    if (pendingFocus === "reason") focusNode = input;
+    return form;
+  }
+
+  function renderAsset(row, item) {
+    var out = item.status === "Checked out";
+    var main = el("div", "item-main");
+    main.appendChild(el("div", "item-name", item.name));
+    main.appendChild(el("div", out ? "asset-detail out" : "asset-detail",
+      out ? "Out for " + item.checked_out_for + " since " + formatTime(item.checked_out_at)
+          : "Available at " + item.spot_label + " " + item.spot));
+    row.appendChild(main);
+
+    if (!out && askingId === item.id) {
+      row.className = "item asking";
+      row.appendChild(buildTakeForm(item));
+      return;
+    }
+
+    var button = el("button", out ? "action" : "action primary", out ? "Put it back" : "Take it");
+    button.type = "button";
+    button.setAttribute("aria-label", (out ? "Put it back: " : "Take it: ") + item.name);
+    button.addEventListener("click", function () {
+      if (out) {
+        item.status = "Available";
+        item.checked_out_for = null;
+        item.checked_out_at = null;
+        saveCheckouts();
+        pendingFocus = "action:" + item.id;
+        render();
+      } else {
+        askingId = item.id;
+        reasonDraft = "";
+        pendingFocus = "reason";
+        renderSpots();
+      }
+    });
+    if (pendingFocus === "action:" + item.id) focusNode = button;
+    row.appendChild(button);
+  }
+
   function renderSpots() {
+    focusNode = null;
+    drawSpots();
+    if (focusNode) focusNode.focus();
+    focusNode = null;
+    pendingFocus = null;
+  }
+
+  function drawSpots() {
     var container = document.getElementById("spots");
     container.textContent = "";
 
@@ -274,14 +481,15 @@
 
       group.items.forEach(function (item) {
         var row = el("div", "item");
-        row.appendChild(el("div", "item-name", item.name));
 
-        // Assets just show their spot for now. Check-out comes next.
-        if (item.type !== "consumable") {
-          row.appendChild(el("div", "asset-spot", item.spot_label + " " + item.spot));
+        // Assets can be taken and put back. Consumables get status buttons.
+        if (item.type === "asset") {
+          renderAsset(row, item);
           section.appendChild(row);
           return;
         }
+
+        row.appendChild(el("div", "item-name", item.name));
 
         var buttons = el("div", "buttons");
         buttons.setAttribute("role", "group");
@@ -311,6 +519,7 @@
 
   function render() {
     renderRestock();
+    renderCheckedOut();
     renderSpots();
   }
 
@@ -318,6 +527,19 @@
   var saved = loadSaved();
   ITEMS.forEach(function (item) {
     if (item.type === "consumable" && STATUSES.indexOf(saved[item.id]) !== -1) item.status = saved[item.id];
+  });
+
+  // Apply any saved check-outs, skipping anything that doesn't look right.
+  var savedCheckouts = loadCheckouts();
+  ITEMS.forEach(function (item) {
+    var saved = savedCheckouts[item.id];
+    if (item.type !== "asset" || !saved) return;
+    var reason = typeof saved.checked_out_for === "string" ? saved.checked_out_for.trim() : "";
+    var at = saved.checked_out_at;
+    if (!reason || typeof at !== "string" || isNaN(new Date(at).getTime())) return;
+    item.status = "Checked out";
+    item.checked_out_for = reason;
+    item.checked_out_at = at;
   });
 
   document.getElementById("search").addEventListener("input", function (event) {
