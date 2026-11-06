@@ -1,42 +1,19 @@
 [
-  {
-    "id": "item-001",
-    "name": "Blue cooler",
-    "home": "A1",
-    "room": "Storage closet",
-    "quantity": 1,
-    "checkedOutFor": null
-  },
-  {
-    "id": "item-002",
-    "name": "Extension cord",
-    "home": "A2",
-    "room": "Storage closet",
-    "quantity": 4,
-    "checkedOutFor": "Sample Demo Night"
-  },
-  {
-    "id": "item-003",
-    "name": "Folding table",
-    "home": "B1",
-    "room": "Back hallway",
-    "quantity": 6,
-    "checkedOutFor": null
-  },
-  {
-    "id": "item-004",
-    "name": "Paper plates (pack)",
-    "home": "C1",
-    "room": "Kitchen pantry",
-    "quantity": 3,
-    "checkedOutFor": null
-  },
-  {
-    "id": "item-005",
-    "name": "Ground coffee (bag)",
-    "home": "C2",
-    "room": "Kitchen pantry",
-    "quantity": 2,
-    "checkedOutFor": null
-  }
+  { "id": "bistro-table", "name": "Bistro table", "category": "furniture", "spot": "A1", "quantity": 2, "unit": "table", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "folding-chair", "name": "Folding chair", "category": "furniture", "spot": "I1", "quantity": 20, "unit": "chair", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "folding-table", "name": "Folding table", "category": "furniture", "spot": "I2", "quantity": 3, "unit": "table", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "high-top-table", "name": "High-top table", "category": "furniture", "spot": "K1", "quantity": 6, "unit": "table", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "canopy", "name": "Canopy", "category": "equipment", "spot": "K2", "quantity": 1, "unit": "canopy", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "cooler", "name": "Cooler", "category": "equipment", "spot": "I3", "quantity": 2, "unit": "cooler", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "speaker", "name": "Speaker", "category": "equipment", "spot": "H1", "quantity": 2, "unit": "speaker", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "microphone", "name": "Wireless microphone", "category": "equipment", "spot": "H1", "quantity": 2, "unit": "mic", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "audio-cable", "name": "Audio cable", "category": "equipment", "spot": "H2", "quantity": 4, "unit": "cable", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "vacuum", "name": "Vacuum", "category": "cleaning", "spot": "F1", "quantity": 2, "unit": "vacuum", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "mop", "name": "Mop", "category": "cleaning", "spot": "F1", "quantity": 2, "unit": "mop", "lowAt": null, "photo": null, "checkouts": [] },
+  { "id": "coffee", "name": "Coffee", "category": "consumable", "spot": "J1", "quantity": 2, "unit": "bag", "lowAt": 3, "photo": null, "checkouts": [] },
+  { "id": "tea", "name": "Tea", "category": "consumable", "spot": "J1", "quantity": 12, "unit": "box", "lowAt": 2, "photo": null, "checkouts": [] },
+  { "id": "paper-plates", "name": "Paper plates", "category": "consumable", "spot": "J2", "quantity": 5, "unit": "pack", "lowAt": 2, "photo": null, "checkouts": [] },
+  { "id": "forks", "name": "Forks", "category": "consumable", "spot": "J2", "quantity": 1, "unit": "box", "lowAt": 2, "photo": null, "checkouts": [] },
+  { "id": "napkins", "name": "Napkins", "category": "consumable", "spot": "J3", "quantity": 6, "unit": "pack", "lowAt": 2, "photo": null, "checkouts": [] },
+  { "id": "trash-bags", "name": "Trash bags", "category": "consumable", "spot": "J4", "quantity": 4, "unit": "roll", "lowAt": 1, "photo": null, "checkouts": [] }
 ]

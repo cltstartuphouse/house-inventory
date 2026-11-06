@@ -30,7 +30,22 @@ Two coolers, a yellow bin, the canopy, speakers, mics, cables, banners, folding 
 
 ## Stack
 
-[React](https://react.dev), [TypeScript](https://www.typescriptlang.org) and [Vite](https://vite.dev). Data starts as a local JSON file, with no hosted database.
+[React](https://react.dev), [TypeScript](https://www.typescriptlang.org), [Vite](https://vite.dev) and [three.js](https://threejs.org) for the 3D house. Data starts from JSON sample files and saves in the browser, with no hosted database.
+
+### What the mockup does
+
+| Tab | What you can do |
+| --- | --- |
+| House | Turn an empty 3D model of the house, look inside, and pick a labeled area to see what's in each spot |
+| Inventory | Take or upload a photo, name it, tag it, then search, filter and sort. Check things out to an event and back in |
+| Low stock | See consumables at or below their reminder level, and copy a shopping list |
+| Events | Teach a setup, then type "I'm having 8 people over" to get what to fetch, from where, and what to buy |
+
+The reminder is a banner in the app. Sending email or text reminders needs a backend.
+
+**The room layout is a placeholder.** The outside is based on an aerial view, but nobody has measured the inside. Fix room positions and doors in `src/lib/layout.ts`, and the model and labels follow.
+
+**Moving to a hosted database:** the data layer is `src/lib/store.ts`. Replace `loadState` and `saveState`, and keep the actions the same. Photos are small data URLs for now, so they stay on one device until then.
 
 ### Run it locally
 
@@ -47,9 +62,9 @@ Then open the URL it prints, usually http://localhost:5173.
 
 | Folder | What goes there |
 | --- | --- |
-| `src/features/` | One folder per feature: items, homes, checkouts, low stock, checklists |
+| `src/features/` | One folder per feature: homes (the 3D house), items, checkouts, low stock, events, checklists |
 | `src/components/` | UI shared between features |
-| `src/lib/` | Storage and helpers |
+| `src/lib/` | The house layout, data store, event planner and photo handling |
 | `src/types/` | Shared TypeScript types |
 | `data/` | Made-up sample data |
 | `docs/` | Written docs, including `docs/checklists/` |
