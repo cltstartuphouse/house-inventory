@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kitchen inventory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=PT+Serif:wght@700&display=swap">
+<style>
+  :root {
+    --cream: #FAF8F8;
+    --ink: #1A1A1A;
+    --powder: #D4B8B8;       /* buttons and section headers */
+    --powder-dark: #B89A9A;  /* borders and pressed states */
+    --pink-text: #8A6A6A;    /* the only pink allowed for small or body text */
+    --hairline: rgba(184, 154, 154, 0.35);
+    --serif: "PT Serif", Georgia, serif;
+    --sans: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink);
+    background: var(--cream);
+    -webkit-text-size-adjust: 100%;
+  }
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+  }
+  h1, h2 { font-family: var(--serif); font-weight: 700; }
+  h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 1.15rem; line-height: 1.25; margin: 0; }
+  .sub { margin: 0 0 24px; color: var(--pink-text); }
+
+  /* Cards */
+  .panel {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(26, 26, 26, 0.05), 0 6px 18px rgba(26, 26, 26, 0.06);
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card-head, .spot-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--powder);
+  }
+  .card-head { justify-content: space-between; }
+  .card-body { padding: 2px 16px; }
+
+  /* Summary cards at the top */
+  .summaries { display: grid; gap: 16px; margin-bottom: 24px; }
+  .summaries .panel { margin-bottom: 0; }
+  .count {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-family: var(--serif);
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .summary.clear .count { background: #fff; color: var(--ink); }
+  .summary ul { list-style: none; margin: 0; padding: 0; }
+  .summary li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .summary li:first-child { border-top: 0; }
+  .where { color: var(--pink-text); font-size: 0.9rem; }
+  .tag {
+    flex: none;
+    align-self: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .tag.stocked, .tag.available { background: var(--powder); color: var(--ink); }
+  .tag.low { background: var(--powder-dark); color: var(--ink); }
+  .tag.out, .tag.checked-out { background: var(--ink); color: var(--cream); }
+  .empty { margin: 0; padding: 12px 0; }
+
+  /* Search and filters */
+  .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-bottom: 24px; }
+  .search-field { grid-column: 1 / -1; }
+  .field label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .field select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 36px;
+    text-overflow: ellipsis;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231A1A1A' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  #search, .field select, .take-form input {
+    width: 100%;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--ink);
+    padding: 12px 14px;
+    min-height: 48px;
+    border: 1.5px solid var(--powder-dark);
+    border-radius: 12px;
+    background-color: #fff;
+  }
+  #search::placeholder, .take-form input::placeholder { color: var(--pink-text); opacity: 1; }
+
+  /* Spot cards */
+  .label {
+    flex: none;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.4;
+    background: #fff;
+    color: var(--ink);
+    padding: 2px 10px;
+    border: 1px solid var(--powder-dark);
+    border-radius: 999px;
+  }
+  .item { padding: 14px 16px; border-top: 1px solid var(--hairline); }
+  .spot-head + .item { border-top: 0; }
+  .item-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .item-main .item-title { margin-bottom: 2px; }
+  .item-name { font-weight: 600; }
+  .empty-state { padding: 8px 16px 16px; }
+  .empty-state .action { width: auto; margin-top: 0; }
+  .asset-detail { color: var(--pink-text); font-size: 0.9rem; }
+  .asset-detail.out { color: var(--ink); font-weight: 700; }
+
+  /* Buttons: outlined by default, filled when selected */
+  .buttons button, .action {
+    min-height: 44px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    background: #fff;
+    border: 1.5px solid var(--powder-dark);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .buttons { display: flex; gap: 8px; }
+  .buttons button { flex: 1; padding: 0 6px; }
+  .buttons button:active, .action:active, .action.primary:active { background: var(--powder-dark); }
+  .buttons button[aria-pressed="true"] { font-weight: 700; }
+  .buttons button.stocked[aria-pressed="true"] { background: var(--powder); }
+  .buttons button.low[aria-pressed="true"] { background: var(--powder-dark); }
+  .buttons button.out[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--cream); }
+
+  .action { width: 100%; margin-top: 10px; padding: 0 18px; }
+  .action.primary { background: var(--powder); }
+
+  .take-form { margin-top: 10px; }
+  .take-form label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .take-form .hint { margin: 6px 0 0; color: var(--pink-text); font-size: 0.9rem; }
+  .form-buttons { display: flex; gap: 8px; }
+  .form-buttons .action { flex: 1; }
+
+  .buttons button:focus-visible, .action:focus-visible, .take-form input:focus-visible, .field select:focus-visible, #search:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+  }
+
+  @media (min-width: 620px) {
+    .summaries { grid-template-columns: 1fr 1fr; align-items: start; }
+    .filters { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr); }
+    .search-field { grid-column: auto; }
+    .item { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .item-title { flex: 1; min-width: 0; margin-bottom: 0; }
+    .buttons { flex: none; width: 280px; }
+    .item-main { flex: 1; min-width: 0; }
+    .item > .action { flex: none; width: 150px; margin-top: 0; }
+    .item.asking { display: block; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kitchen inventory</h1>
+  <p class="sub">Tap Stocked, Low or Out for supplies. Tap Take it to check out anything else.</p>
+
+  <div class="summaries">
+    <section id="restock" class="panel summary" aria-live="polite">
+      <div class="card-head">
+        <h2>Needs restocking</h2>
+        <span id="restock-count" class="count">0</span>
+      </div>
+      <div id="restock-body" class="card-body"></div>
+    </section>
+
+    <section id="checkedout" class="panel summary" aria-live="polite">
+      <div class="card-head">
+        <h2>Checked out now</h2>
+        <span id="checkedout-count" class="count">0</span>
+      </div>
+      <div id="checkedout-body" class="card-body"></div>
+    </section>
+  </div>
+
+  <div class="filters">
+    <div class="field search-field">
+      <label for="search">Search items</label>
+      <input id="search" type="search" placeholder="Item or spot name" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="room">Room</label>
+      <select id="room"></select>
+    </div>
+    <div class="field">
+      <label for="show">Show</label>
+      <select id="show">
+        <option value="everything">Everything</option>
+        <option value="checked-out">Checked out</option>
+        <option value="restock">Needs restocking</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="spots"></div>
+</main>
+
+<script>
+  // Copied from data/kitchen.json so this page works without a server.
+  var ITEMS = [
+    { id: "k1-trash-bags-13-gal", name: "Trash bags 13 gal", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-lysol-wipes", name: "Lysol wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-disinfecting-wipes", name: "Disinfecting wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-dish-soap", name: "Dish soap", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k1-dishwasher-pacs", name: "Dishwasher pacs", room: "Kitchen", spot: "Under the sink", spot_label: "K1", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-toilet-paper", name: "Toilet paper", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-paper-towels", name: "Paper towels", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-dinner-napkins", name: "Dinner napkins", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-foil-pans", name: "Foil pans", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-foil", name: "Foil", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k2-knife-block", name: "Knife block", room: "Kitchen", spot: "Cabinet above fridge", spot_label: "K2", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k3-colonial-signature-blend-packs", name: "Colonial Signature Blend packs", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k3-lion-toasted-coconut-coffee", name: "Lion Toasted Coconut coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k3-open-bag-of-coffee", name: "Open bag of coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k3-rishi-turmeric-ginger-tea", name: "Rishi Turmeric Ginger tea", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-hot-cups", name: "Hot cups", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-cup-lids", name: "Cup lids", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-earl-grey", name: "Bigelow Earl Grey", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-english-teatime", name: "Bigelow English Teatime", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-lemon-lift", name: "Bigelow Lemon Lift", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-bigelow-green-tea", name: "Bigelow Green Tea", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-rishi-earl-grey", name: "Rishi Earl Grey", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-sugar-packets", name: "Sugar packets", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-raw-sugar", name: "Raw sugar", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-splenda", name: "Splenda", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k4-stir-sticks", name: "Stir sticks", room: "Kitchen", spot: "Coffee station on counter", spot_label: "K4", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-quilted-napkins", name: "Quilted napkins", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-lunch-napkins", name: "Lunch napkins", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-plastic-spoons", name: "Plastic spoons", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-plastic-forks", name: "Plastic forks", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-black-plastic-utensils", name: "Black plastic utensils", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k5-everyday-500-count-pack", name: "Everyday 500-count pack", room: "Kitchen", spot: "Napkin and utensil drawer", spot_label: "K5", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k6-sony-tv-remote", name: "Sony TV remote", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k6-second-tv-remote", name: "Second TV remote", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k6-long-lighter", name: "Long lighter", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k6-water-dispenser-manual", name: "Water dispenser manual", room: "Kitchen", spot: "Junk drawer", spot_label: "K6", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-dinner-plates", name: "Dinner plates", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-salad-plates", name: "Salad plates", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-serving-platters", name: "Serving platters", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k7-salt-and-pepper-shakers", name: "Salt and pepper shakers", room: "Kitchen", spot: "Dish cabinet", spot_label: "K7", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k8-stemless-wine-glasses", name: "Stemless wine glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k8-blue-pressed-glasses", name: "Blue pressed glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k8-amber-pressed-glasses", name: "Amber pressed glasses", room: "Kitchen", spot: "Glass cabinet", spot_label: "K8", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k9-mug-tree-with-mugs", name: "Mug tree with mugs", room: "Kitchen", spot: "Counter", spot_label: "K9", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k9-microwave", name: "Microwave", room: "Kitchen", spot: "Counter", spot_label: "K9", type: "asset", status: "Available", checked_out_for: null, checked_out_at: null },
+    { id: "k10-sparkling-water-lime", name: "Sparkling water lime", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k10-sparkling-water-grapefruit", name: "Sparkling water grapefruit", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k10-sparkling-water-lemon", name: "Sparkling water lemon", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null },
+    { id: "k10-coke", name: "Coke", room: "Kitchen", spot: "Fridge", spot_label: "K10", type: "consumable", status: "Stocked", checked_out_for: null, checked_out_at: null }
+  ];
+
+  var STATUSES = ["Stocked", "Low", "Out"];
+  var STORAGE_KEY = "house-inventory.kitchen.status";
+
+  var CHECKOUT_KEY = "house-inventory.kitchen.checkouts";
+
+  var query = "";
+  var roomFilter = "";           // "" means all rooms
+  var showFilter = "everything"; // or "checked-out" or "restock"
+  var askingId = null;     // the asset showing the "What's it for?" question, if any
+  var reasonDraft = "";    // what has been typed into that question so far
+  var pendingFocus = null; // which control to focus after the next redraw
+  var focusNode = null;
+
+  // Saved statuses look like { "k1-dish-soap": "Low" }.
+  function loadSaved() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return saved && typeof saved === "object" ? saved : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function save() {
+    var out = {};
+    ITEMS.forEach(function (item) {
+      if (item.type === "consumable") out[item.id] = item.status;
+    });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+    } catch (e) {
+      // Storage can be blocked in private windows. The page still works until refresh.
+    }
+  }
+
+  // Saved check-outs look like
+  // { "k9-microwave": { "checked_out_for": "Thursday meetup", "checked_out_at": "2026-11-05T23:10:00.000Z" } }.
+  // An event or a reason only. Never a person's name.
+  function loadCheckouts() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(CHECKOUT_KEY) || "{}");
+      return saved && typeof saved === "object" ? saved : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveCheckouts() {
+    var out = {};
+    ITEMS.forEach(function (item) {
+      if (item.type === "asset" && item.status === "Checked out") {
+        out[item.id] = { checked_out_for: item.checked_out_for, checked_out_at: item.checked_out_at };
+      }
+    });
+    try {
+      localStorage.setItem(CHECKOUT_KEY, JSON.stringify(out));
+    } catch (e) {
+      // Storage can be blocked in private windows. The page still works until refresh.
+    }
+  }
+
+  function formatTime(iso) {
+    var date = new Date(iso);
+    if (isNaN(date.getTime())) return "an unknown time";
+    return date.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+
+  function inRoom(item) {
+    return !roomFilter || item.room === roomFilter;
+  }
+
+  function needsRestock(item) {
+    return item.type === "consumable" && item.status !== "Stocked";
+  }
+
+  function isCheckedOut(item) {
+    return item.type === "asset" && item.status === "Checked out";
+  }
+
+  // Room first, then the Show filter, then the search box (item name or spot name).
+  function matchesFilters(item) {
+    if (!inRoom(item)) return false;
+    if (showFilter === "checked-out" && !isCheckedOut(item)) return false;
+    if (showFilter === "restock" && !needsRestock(item)) return false;
+    var q = query.trim().toLowerCase();
+    if (!q) return true;
+    return item.name.toLowerCase().indexOf(q) !== -1 || item.spot.toLowerCase().indexOf(q) !== -1;
+  }
+
+  // The small status pill shown on every result.
+  function pillClass(item) {
+    return "tag " + item.status.toLowerCase().replace(/ /g, "-");
+  }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function renderRestock() {
+    var panel = document.getElementById("restock");
+    var body = document.getElementById("restock-body");
+    body.textContent = "";
+
+    var needed = ITEMS.filter(function (item) {
+      return inRoom(item) && needsRestock(item);
+    });
+    // Out comes before Low.
+    needed.sort(function (a, b) { return (a.status === "Out" ? 0 : 1) - (b.status === "Out" ? 0 : 1); });
+
+    document.getElementById("restock-count").textContent = needed.length;
+    panel.classList.toggle("clear", needed.length === 0);
+    if (needed.length === 0) {
+      body.appendChild(el("p", "empty", "Nothing right now. Everything is stocked."));
+      return;
+    }
+
+    var list = el("ul");
+    needed.forEach(function (item) {
+      var row = el("li");
+      var left = el("div");
+      left.appendChild(el("div", "", item.name));
+      left.appendChild(el("div", "where", item.spot_label + " " + item.spot));
+      row.appendChild(left);
+      row.appendChild(el("span", "tag " + item.status.toLowerCase(), item.status));
+      list.appendChild(row);
+    });
+    body.appendChild(list);
+  }
+
+  function renderCheckedOut() {
+    var panel = document.getElementById("checkedout");
+    var body = document.getElementById("checkedout-body");
+    body.textContent = "";
+
+    var out = ITEMS.filter(function (item) {
+      return inRoom(item) && isCheckedOut(item);
+    });
+    // Longest out comes first.
+    out.sort(function (a, b) { return a.checked_out_at < b.checked_out_at ? -1 : a.checked_out_at > b.checked_out_at ? 1 : 0; });
+
+    document.getElementById("checkedout-count").textContent = out.length;
+    panel.classList.toggle("clear", out.length === 0);
+    if (out.length === 0) {
+      body.appendChild(el("p", "empty", "Nothing is checked out."));
+      return;
+    }
+
+    var list = el("ul");
+    out.forEach(function (item) {
+      var row = el("li");
+      var left = el("div");
+      left.appendChild(el("div", "", item.name));
+      left.appendChild(el("div", "where", "For " + item.checked_out_for));
+      left.appendChild(el("div", "where", "Since " + formatTime(item.checked_out_at)));
+      left.appendChild(el("div", "where", "Goes back to " + item.spot_label + " " + item.spot));
+      row.appendChild(left);
+      list.appendChild(row);
+    });
+    body.appendChild(list);
+  }
+
+  // The "What's it for?" question shown after tapping Take it.
+  function buildTakeForm(item) {
+    var form = el("form", "take-form");
+    var label = el("label", "", "What's it for?");
+    label.htmlFor = "reason-" + item.id;
+    var input = el("input");
+    input.id = "reason-" + item.id;
+    input.type = "text";
+    input.maxLength = 80;
+    input.required = true;
+    input.autocomplete = "off";
+    input.placeholder = "Thursday meetup";
+    input.value = reasonDraft;
+    input.addEventListener("input", function () { reasonDraft = input.value; });
+
+    var buttons = el("div", "form-buttons");
+    var take = el("button", "action primary", "Take it");
+    take.type = "submit";
+    var cancel = el("button", "action", "Cancel");
+    cancel.type = "button";
+    cancel.addEventListener("click", function () {
+      askingId = null;
+      reasonDraft = "";
+      pendingFocus = "action:" + item.id;
+      renderSpots();
+    });
+    buttons.appendChild(take);
+    buttons.appendChild(cancel);
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var reason = input.value.replace(/\s+/g, " ").trim();
+      if (!reason) {
+        input.focus();
+        return;
+      }
+      item.status = "Checked out";
+      item.checked_out_for = reason;
+      item.checked_out_at = new Date().toISOString();
+      askingId = null;
+      reasonDraft = "";
+      saveCheckouts();
+      pendingFocus = "action:" + item.id;
+      render();
+    });
+
+    form.appendChild(label);
+    form.appendChild(input);
+    form.appendChild(el("p", "hint", "An event or a reason, like Thursday meetup or Back room TV. No people's names."));
+    form.appendChild(buttons);
+    if (pendingFocus === "reason") focusNode = input;
+    return form;
+  }
+
+  function renderAsset(row, item) {
+    var out = item.status === "Checked out";
+    var main = el("div", "item-main");
+    var title = el("div", "item-title");
+    title.appendChild(el("div", "item-name", item.name));
+    title.appendChild(el("span", pillClass(item), item.status));
+    main.appendChild(title);
+    main.appendChild(el("div", out ? "asset-detail out" : "asset-detail",
+      out ? "Out for " + item.checked_out_for + " since " + formatTime(item.checked_out_at)
+          : "Available at " + item.spot_label + " " + item.spot));
+    row.appendChild(main);
+
+    if (!out && askingId === item.id) {
+      row.className = "item asking";
+      row.appendChild(buildTakeForm(item));
+      return;
+    }
+
+    var button = el("button", out ? "action" : "action primary", out ? "Put it back" : "Take it");
+    button.type = "button";
+    button.setAttribute("aria-label", (out ? "Put it back: " : "Take it: ") + item.name);
+    button.addEventListener("click", function () {
+      if (out) {
+        item.status = "Available";
+        item.checked_out_for = null;
+        item.checked_out_at = null;
+        saveCheckouts();
+        pendingFocus = "action:" + item.id;
+        render();
+      } else {
+        askingId = item.id;
+        reasonDraft = "";
+        pendingFocus = "reason";
+        renderSpots();
+      }
+    });
+    if (pendingFocus === "action:" + item.id) focusNode = button;
+    row.appendChild(button);
+  }
+
+  function renderSpots() {
+    focusNode = null;
+    drawSpots();
+    if (focusNode) focusNode.focus();
+    focusNode = null;
+    pendingFocus = null;
+  }
+
+  function drawSpots() {
+    var container = document.getElementById("spots");
+    container.textContent = "";
+
+    var visible = ITEMS.filter(matchesFilters);
+
+    if (visible.length === 0) {
+      var box = el("section", "panel empty-state");
+      if (query.trim()) {
+        box.appendChild(el("p", "empty", "Nothing here by that name"));
+        var clear = el("button", "action", "Clear search");
+        clear.type = "button";
+        clear.addEventListener("click", function () {
+          var search = document.getElementById("search");
+          query = "";
+          search.value = "";
+          renderSpots();
+          search.focus();
+        });
+        box.appendChild(clear);
+      } else {
+        // No search text to clear, so say what the filter found instead.
+        box.appendChild(el("p", "empty",
+          showFilter === "checked-out" ? "Nothing is checked out." :
+          showFilter === "restock" ? "Nothing needs restocking." : "Nothing here yet."));
+      }
+      container.appendChild(box);
+      return;
+    }
+
+    // Group by room and spot label, keeping the order from the data.
+    var groups = [];
+    var byLabel = {};
+    visible.forEach(function (item) {
+      var key = item.room + "|" + item.spot_label;
+      if (!byLabel[key]) {
+        byLabel[key] = { label: item.spot_label, spot: item.spot, items: [] };
+        groups.push(byLabel[key]);
+      }
+      byLabel[key].items.push(item);
+    });
+
+    groups.forEach(function (group) {
+      var section = el("section", "panel");
+      var head = el("div", "spot-head");
+      head.appendChild(el("span", "label", group.label));
+      head.appendChild(el("h2", "", group.spot));
+      section.appendChild(head);
+
+      group.items.forEach(function (item) {
+        var row = el("div", "item");
+
+        // Assets can be taken and put back. Consumables get status buttons.
+        if (item.type === "asset") {
+          renderAsset(row, item);
+          section.appendChild(row);
+          return;
+        }
+
+        var title = el("div", "item-title");
+        title.appendChild(el("div", "item-name", item.name));
+        var pill = el("span", pillClass(item), item.status);
+        title.appendChild(pill);
+        row.appendChild(title);
+
+        var buttons = el("div", "buttons");
+        buttons.setAttribute("role", "group");
+        buttons.setAttribute("aria-label", "Status for " + item.name);
+        STATUSES.forEach(function (status) {
+          var button = el("button", status.toLowerCase(), status);
+          button.type = "button";
+          button.setAttribute("aria-pressed", String(item.status === status));
+          button.addEventListener("click", function () {
+            item.status = status;
+            save();
+            renderRestock();
+            // If the list is filtered to what needs restocking, a stocked item leaves it.
+            if (showFilter === "restock" && !needsRestock(item)) {
+              renderSpots();
+              return;
+            }
+            // Otherwise update this row in place so the tapped button keeps focus.
+            Array.prototype.forEach.call(buttons.children, function (other) {
+              other.setAttribute("aria-pressed", String(other === button));
+            });
+            pill.className = pillClass(item);
+            pill.textContent = item.status;
+          });
+          buttons.appendChild(button);
+        });
+        row.appendChild(buttons);
+        section.appendChild(row);
+      });
+
+      container.appendChild(section);
+    });
+  }
+
+  function render() {
+    renderRestock();
+    renderCheckedOut();
+    renderSpots();
+  }
+
+  // Apply any saved statuses on top of the starting data.
+  var saved = loadSaved();
+  ITEMS.forEach(function (item) {
+    if (item.type === "consumable" && STATUSES.indexOf(saved[item.id]) !== -1) item.status = saved[item.id];
+  });
+
+  // Apply any saved check-outs, skipping anything that doesn't look right.
+  var savedCheckouts = loadCheckouts();
+  ITEMS.forEach(function (item) {
+    var saved = savedCheckouts[item.id];
+    if (item.type !== "asset" || !saved) return;
+    var reason = typeof saved.checked_out_for === "string" ? saved.checked_out_for.trim() : "";
+    var at = saved.checked_out_at;
+    if (!reason || typeof at !== "string" || isNaN(new Date(at).getTime())) return;
+    item.status = "Checked out";
+    item.checked_out_for = reason;
+    item.checked_out_at = at;
+  });
+
+  document.getElementById("search").addEventListener("input", function (event) {
+    query = event.target.value;
+    renderSpots();
+  });
+
+  // The room list builds itself from the data, so new rooms appear automatically.
+  var roomSelect = document.getElementById("room");
+  var rooms = [];
+  ITEMS.forEach(function (item) {
+    if (rooms.indexOf(item.room) === -1) rooms.push(item.room);
+  });
+  [""].concat(rooms).forEach(function (room) {
+    var option = el("option", "", room || "All rooms");
+    option.value = room;
+    roomSelect.appendChild(option);
+  });
+  roomSelect.addEventListener("change", function (event) {
+    roomFilter = event.target.value;
+    render();
+  });
+
+  document.getElementById("show").addEventListener("change", function (event) {
+    showFilter = event.target.value;
+    renderSpots();
+  });
+
+  render();
+</script>
+</body>
+</html>
