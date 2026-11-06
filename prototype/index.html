@@ -93,23 +93,36 @@
     padding: 3px 10px;
     border-radius: 999px;
   }
+  .tag.stocked, .tag.available { background: var(--powder); color: var(--ink); }
   .tag.low { background: var(--powder-dark); color: var(--ink); }
-  .tag.out { background: var(--ink); color: var(--cream); }
+  .tag.out, .tag.checked-out { background: var(--ink); color: var(--cream); }
   .empty { margin: 0; padding: 12px 0; }
 
-  /* Search */
-  label[for="search"] { display: block; font-weight: 700; margin-bottom: 6px; }
-  #search, .take-form input {
+  /* Search and filters */
+  .filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin-bottom: 24px; }
+  .search-field { grid-column: 1 / -1; }
+  .field label { display: block; font-weight: 700; margin-bottom: 6px; }
+  .field select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 36px;
+    text-overflow: ellipsis;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%231A1A1A' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  #search, .field select, .take-form input {
     width: 100%;
     font-size: 16px;
     font-family: inherit;
     color: var(--ink);
     padding: 12px 14px;
+    min-height: 48px;
     border: 1.5px solid var(--powder-dark);
     border-radius: 12px;
-    background: #fff;
+    background-color: #fff;
   }
-  #search { margin-bottom: 24px; }
   #search::placeholder, .take-form input::placeholder { color: var(--pink-text); opacity: 1; }
 
   /* Spot cards */
@@ -126,8 +139,11 @@
   }
   .item { padding: 14px 16px; border-top: 1px solid var(--hairline); }
   .spot-head + .item { border-top: 0; }
-  .item-name { font-weight: 600; margin-bottom: 8px; }
-  .item-main .item-name { margin-bottom: 0; }
+  .item-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .item-main .item-title { margin-bottom: 2px; }
+  .item-name { font-weight: 600; }
+  .empty-state { padding: 8px 16px 16px; }
+  .empty-state .action { width: auto; margin-top: 0; }
   .asset-detail { color: var(--pink-text); font-size: 0.9rem; }
   .asset-detail.out { color: var(--ink); font-weight: 700; }
 
@@ -160,15 +176,17 @@
   .form-buttons { display: flex; gap: 8px; }
   .form-buttons .action { flex: 1; }
 
-  .buttons button:focus-visible, .action:focus-visible, .take-form input:focus-visible, #search:focus-visible {
+  .buttons button:focus-visible, .action:focus-visible, .take-form input:focus-visible, .field select:focus-visible, #search:focus-visible {
     outline: 3px solid var(--ink);
     outline-offset: 2px;
   }
 
   @media (min-width: 620px) {
     .summaries { grid-template-columns: 1fr 1fr; align-items: start; }
+    .filters { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr); }
+    .search-field { grid-column: auto; }
     .item { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-    .item-name { margin-bottom: 0; }
+    .item-title { flex: 1; min-width: 0; margin-bottom: 0; }
     .buttons { flex: none; width: 280px; }
     .item-main { flex: 1; min-width: 0; }
     .item > .action { flex: none; width: 150px; margin-top: 0; }
@@ -199,8 +217,24 @@
     </section>
   </div>
 
-  <label for="search">Search items</label>
-  <input id="search" type="search" placeholder="Type an item name" autocomplete="off">
+  <div class="filters">
+    <div class="field search-field">
+      <label for="search">Search items</label>
+      <input id="search" type="search" placeholder="Item or spot name" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="room">Room</label>
+      <select id="room"></select>
+    </div>
+    <div class="field">
+      <label for="show">Show</label>
+      <select id="show">
+        <option value="everything">Everything</option>
+        <option value="checked-out">Checked out</option>
+        <option value="restock">Needs restocking</option>
+      </select>
+    </div>
+  </div>
 
   <div id="spots"></div>
 </main>
@@ -265,6 +299,8 @@
   var CHECKOUT_KEY = "house-inventory.kitchen.checkouts";
 
   var query = "";
+  var roomFilter = "";           // "" means all rooms
+  var showFilter = "everything"; // or "checked-out" or "restock"
   var askingId = null;     // the asset showing the "What's it for?" question, if any
   var reasonDraft = "";    // what has been typed into that question so far
   var pendingFocus = null; // which control to focus after the next redraw
@@ -324,6 +360,33 @@
     return date.toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
+  function inRoom(item) {
+    return !roomFilter || item.room === roomFilter;
+  }
+
+  function needsRestock(item) {
+    return item.type === "consumable" && item.status !== "Stocked";
+  }
+
+  function isCheckedOut(item) {
+    return item.type === "asset" && item.status === "Checked out";
+  }
+
+  // Room first, then the Show filter, then the search box (item name or spot name).
+  function matchesFilters(item) {
+    if (!inRoom(item)) return false;
+    if (showFilter === "checked-out" && !isCheckedOut(item)) return false;
+    if (showFilter === "restock" && !needsRestock(item)) return false;
+    var q = query.trim().toLowerCase();
+    if (!q) return true;
+    return item.name.toLowerCase().indexOf(q) !== -1 || item.spot.toLowerCase().indexOf(q) !== -1;
+  }
+
+  // The small status pill shown on every result.
+  function pillClass(item) {
+    return "tag " + item.status.toLowerCase().replace(/ /g, "-");
+  }
+
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -337,7 +400,7 @@
     body.textContent = "";
 
     var needed = ITEMS.filter(function (item) {
-      return item.type === "consumable" && item.status !== "Stocked";
+      return inRoom(item) && needsRestock(item);
     });
     // Out comes before Low.
     needed.sort(function (a, b) { return (a.status === "Out" ? 0 : 1) - (b.status === "Out" ? 0 : 1); });
@@ -368,7 +431,7 @@
     body.textContent = "";
 
     var out = ITEMS.filter(function (item) {
-      return item.type === "asset" && item.status === "Checked out";
+      return inRoom(item) && isCheckedOut(item);
     });
     // Longest out comes first.
     out.sort(function (a, b) { return a.checked_out_at < b.checked_out_at ? -1 : a.checked_out_at > b.checked_out_at ? 1 : 0; });
@@ -451,7 +514,10 @@
   function renderAsset(row, item) {
     var out = item.status === "Checked out";
     var main = el("div", "item-main");
-    main.appendChild(el("div", "item-name", item.name));
+    var title = el("div", "item-title");
+    title.appendChild(el("div", "item-name", item.name));
+    title.appendChild(el("span", pillClass(item), item.status));
+    main.appendChild(title);
     main.appendChild(el("div", out ? "asset-detail out" : "asset-detail",
       out ? "Out for " + item.checked_out_for + " since " + formatTime(item.checked_out_at)
           : "Available at " + item.spot_label + " " + item.spot));
@@ -497,25 +563,42 @@
     var container = document.getElementById("spots");
     container.textContent = "";
 
-    var q = query.trim().toLowerCase();
-    var visible = ITEMS.filter(function (item) {
-      return item.name.toLowerCase().indexOf(q) !== -1;
-    });
+    var visible = ITEMS.filter(matchesFilters);
 
     if (visible.length === 0) {
-      container.appendChild(el("p", "empty", "No items match that search."));
+      var box = el("section", "panel empty-state");
+      if (query.trim()) {
+        box.appendChild(el("p", "empty", "Nothing here by that name"));
+        var clear = el("button", "action", "Clear search");
+        clear.type = "button";
+        clear.addEventListener("click", function () {
+          var search = document.getElementById("search");
+          query = "";
+          search.value = "";
+          renderSpots();
+          search.focus();
+        });
+        box.appendChild(clear);
+      } else {
+        // No search text to clear, so say what the filter found instead.
+        box.appendChild(el("p", "empty",
+          showFilter === "checked-out" ? "Nothing is checked out." :
+          showFilter === "restock" ? "Nothing needs restocking." : "Nothing here yet."));
+      }
+      container.appendChild(box);
       return;
     }
 
-    // Group by spot label, keeping the order from the data.
+    // Group by room and spot label, keeping the order from the data.
     var groups = [];
     var byLabel = {};
     visible.forEach(function (item) {
-      if (!byLabel[item.spot_label]) {
-        byLabel[item.spot_label] = { label: item.spot_label, spot: item.spot, items: [] };
-        groups.push(byLabel[item.spot_label]);
+      var key = item.room + "|" + item.spot_label;
+      if (!byLabel[key]) {
+        byLabel[key] = { label: item.spot_label, spot: item.spot, items: [] };
+        groups.push(byLabel[key]);
       }
-      byLabel[item.spot_label].items.push(item);
+      byLabel[key].items.push(item);
     });
 
     groups.forEach(function (group) {
@@ -535,7 +618,11 @@
           return;
         }
 
-        row.appendChild(el("div", "item-name", item.name));
+        var title = el("div", "item-title");
+        title.appendChild(el("div", "item-name", item.name));
+        var pill = el("span", pillClass(item), item.status);
+        title.appendChild(pill);
+        row.appendChild(title);
 
         var buttons = el("div", "buttons");
         buttons.setAttribute("role", "group");
@@ -547,11 +634,18 @@
           button.addEventListener("click", function () {
             item.status = status;
             save();
-            // Update this row's buttons in place so the tapped button keeps focus.
+            renderRestock();
+            // If the list is filtered to what needs restocking, a stocked item leaves it.
+            if (showFilter === "restock" && !needsRestock(item)) {
+              renderSpots();
+              return;
+            }
+            // Otherwise update this row in place so the tapped button keeps focus.
             Array.prototype.forEach.call(buttons.children, function (other) {
               other.setAttribute("aria-pressed", String(other === button));
             });
-            renderRestock();
+            pill.className = pillClass(item);
+            pill.textContent = item.status;
           });
           buttons.appendChild(button);
         });
@@ -590,6 +684,27 @@
 
   document.getElementById("search").addEventListener("input", function (event) {
     query = event.target.value;
+    renderSpots();
+  });
+
+  // The room list builds itself from the data, so new rooms appear automatically.
+  var roomSelect = document.getElementById("room");
+  var rooms = [];
+  ITEMS.forEach(function (item) {
+    if (rooms.indexOf(item.room) === -1) rooms.push(item.room);
+  });
+  [""].concat(rooms).forEach(function (room) {
+    var option = el("option", "", room || "All rooms");
+    option.value = room;
+    roomSelect.appendChild(option);
+  });
+  roomSelect.addEventListener("change", function (event) {
+    roomFilter = event.target.value;
+    render();
+  });
+
+  document.getElementById("show").addEventListener("change", function (event) {
+    showFilter = event.target.value;
     renderSpots();
   });
 
