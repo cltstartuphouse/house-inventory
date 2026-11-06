@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kitchen consumables</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    color: #1c1c1c;
+    background: #f5f5f3;
+  }
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px 16px 48px;
+  }
+  h1 { font-size: 1.5rem; margin: 8px 0 4px; }
+  .sub { margin: 0 0 16px; color: #555; }
+  h2 { font-size: 1.1rem; margin: 0 0 8px; }
+
+  .panel {
+    background: #fff;
+    border: 1px solid #d9d9d5;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+
+  #restock { border-left: 5px solid #b45309; }
+  #restock.clear { border-left-color: #2f6f3e; }
+  #restock ul { list-style: none; margin: 0; padding: 0; }
+  #restock li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-top: 1px solid #eee;
+  }
+  #restock li:first-child { border-top: 0; }
+  .where { color: #555; font-size: 0.9rem; }
+  .tag {
+    flex: none;
+    align-self: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .tag.low { background: #fdecc8; color: #7a4a00; }
+  .tag.out { background: #fbd5d5; color: #8a1c1c; }
+  .empty { margin: 0; color: #555; }
+
+  label[for="search"] { display: block; font-weight: 600; margin-bottom: 4px; }
+  #search {
+    width: 100%;
+    font-size: 16px;
+    padding: 10px 12px;
+    border: 1px solid #b5b5b0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    background: #fff;
+  }
+
+  .spot-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .label {
+    flex: none;
+    font-weight: 700;
+    background: #1c1c1c;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .spot-head h2 { margin: 0; }
+
+  .item { padding: 10px 0; border-top: 1px solid #eee; }
+  .item-name { margin-bottom: 6px; }
+  .buttons { display: flex; gap: 6px; }
+  .buttons button {
+    flex: 1;
+    min-height: 44px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #1c1c1c;
+    background: #fff;
+    border: 1px solid #b5b5b0;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .buttons button[aria-pressed="true"] { font-weight: 700; border-width: 2px; }
+  .buttons button.stocked[aria-pressed="true"] { background: #d8ecdc; border-color: #2f6f3e; color: #1d4a28; }
+  .buttons button.low[aria-pressed="true"] { background: #fdecc8; border-color: #b45309; color: #7a4a00; }
+  .buttons button.out[aria-pressed="true"] { background: #fbd5d5; border-color: #b42318; color: #8a1c1c; }
+  .buttons button:focus-visible, #search:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+
+  @media (min-width: 520px) {
+    .item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .item-name { margin-bottom: 0; }
+    .buttons { flex: none; width: 260px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kitchen consumables</h1>
+  <p class="sub">Tap Stocked, Low or Out for each item.</p>
+
+  <section id="restock" class="panel" aria-live="polite">
+    <h2>Needs restocking</h2>
+    <div id="restock-body"></div>
+  </section>
+
+  <label for="search">Search items</label>
+  <input id="search" type="search" placeholder="Type an item name" autocomplete="off">
+
+  <div id="spots"></div>
+</main>
+
+<script>
+  // Copied from data/kitchen.json so this page works without a server.
+  var ITEMS = [
+    { id: "k1-clorox-wipes", name: "Clorox wipes", room: "Kitchen", spot: "Under the sink", spot_label: "K1", status: "Stocked" },
+    { id: "k1-dish-soap", name: "Dish soap", room: "Kitchen", spot: "Under the sink", spot_label: "K1", status: "Stocked" },
+    { id: "k1-dishwasher-detergent", name: "Dishwasher detergent", room: "Kitchen", spot: "Under the sink", spot_label: "K1", status: "Stocked" },
+    { id: "k1-trash-bags", name: "Trash bags", room: "Kitchen", spot: "Under the sink", spot_label: "K1", status: "Stocked" },
+    { id: "k2-toilet-paper", name: "Toilet paper", room: "Kitchen", spot: "Cabinet above the fridge", spot_label: "K2", status: "Stocked" },
+    { id: "k2-paper-towels", name: "Paper towels", room: "Kitchen", spot: "Cabinet above the fridge", spot_label: "K2", status: "Stocked" },
+    { id: "k2-napkins", name: "Napkins", room: "Kitchen", spot: "Cabinet above the fridge", spot_label: "K2", status: "Stocked" },
+    { id: "k2-foil-pans-and-foil", name: "Foil pans and foil", room: "Kitchen", spot: "Cabinet above the fridge", spot_label: "K2", status: "Stocked" },
+    { id: "k3-colonial-signature-blend-coffee", name: "Colonial Signature Blend coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", status: "Stocked" },
+    { id: "k3-lion-toasted-coconut-coffee", name: "Lion Toasted Coconut coffee", room: "Kitchen", spot: "Coffee drawer", spot_label: "K3", status: "Stocked" }
+  ];
+
+  var STATUSES = ["Stocked", "Low", "Out"];
+  var STORAGE_KEY = "house-inventory.kitchen.status";
+
+  var query = "";
+
+  // Saved statuses look like { "k1-dish-soap": "Low" }.
+  function loadSaved() {
+    try {
+      var saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      return saved && typeof saved === "object" ? saved : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function save() {
+    var out = {};
+    ITEMS.forEach(function (item) { out[item.id] = item.status; });
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(out));
+    } catch (e) {
+      // Storage can be blocked in private windows. The page still works until refresh.
+    }
+  }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function renderRestock() {
+    var panel = document.getElementById("restock");
+    var body = document.getElementById("restock-body");
+    body.textContent = "";
+
+    var needed = ITEMS.filter(function (item) { return item.status !== "Stocked"; });
+    // Out comes before Low.
+    needed.sort(function (a, b) { return (a.status === "Out" ? 0 : 1) - (b.status === "Out" ? 0 : 1); });
+
+    panel.classList.toggle("clear", needed.length === 0);
+    if (needed.length === 0) {
+      body.appendChild(el("p", "empty", "Nothing right now. Everything is stocked."));
+      return;
+    }
+
+    var list = el("ul");
+    needed.forEach(function (item) {
+      var row = el("li");
+      var left = el("div");
+      left.appendChild(el("div", "", item.name));
+      left.appendChild(el("div", "where", item.spot_label + " " + item.spot));
+      row.appendChild(left);
+      row.appendChild(el("span", "tag " + item.status.toLowerCase(), item.status));
+      list.appendChild(row);
+    });
+    body.appendChild(list);
+  }
+
+  function renderSpots() {
+    var container = document.getElementById("spots");
+    container.textContent = "";
+
+    var q = query.trim().toLowerCase();
+    var visible = ITEMS.filter(function (item) {
+      return item.name.toLowerCase().indexOf(q) !== -1;
+    });
+
+    if (visible.length === 0) {
+      container.appendChild(el("p", "empty", "No items match that search."));
+      return;
+    }
+
+    // Group by spot label, keeping the order from the data.
+    var groups = [];
+    var byLabel = {};
+    visible.forEach(function (item) {
+      if (!byLabel[item.spot_label]) {
+        byLabel[item.spot_label] = { label: item.spot_label, spot: item.spot, items: [] };
+        groups.push(byLabel[item.spot_label]);
+      }
+      byLabel[item.spot_label].items.push(item);
+    });
+
+    groups.forEach(function (group) {
+      var section = el("section", "panel");
+      var head = el("div", "spot-head");
+      head.appendChild(el("span", "label", group.label));
+      head.appendChild(el("h2", "", group.spot));
+      section.appendChild(head);
+
+      group.items.forEach(function (item) {
+        var row = el("div", "item");
+        row.appendChild(el("div", "item-name", item.name));
+
+        var buttons = el("div", "buttons");
+        buttons.setAttribute("role", "group");
+        buttons.setAttribute("aria-label", "Status for " + item.name);
+        STATUSES.forEach(function (status) {
+          var button = el("button", status.toLowerCase(), status);
+          button.type = "button";
+          button.setAttribute("aria-pressed", String(item.status === status));
+          button.addEventListener("click", function () {
+            item.status = status;
+            save();
+            // Update this row's buttons in place so the tapped button keeps focus.
+            Array.prototype.forEach.call(buttons.children, function (other) {
+              other.setAttribute("aria-pressed", String(other === button));
+            });
+            renderRestock();
+          });
+          buttons.appendChild(button);
+        });
+        row.appendChild(buttons);
+        section.appendChild(row);
+      });
+
+      container.appendChild(section);
+    });
+  }
+
+  function render() {
+    renderRestock();
+    renderSpots();
+  }
+
+  // Apply any saved statuses on top of the starting data.
+  var saved = loadSaved();
+  ITEMS.forEach(function (item) {
+    if (STATUSES.indexOf(saved[item.id]) !== -1) item.status = saved[item.id];
+  });
+
+  document.getElementById("search").addEventListener("input", function (event) {
+    query = event.target.value;
+    renderSpots();
+  });
+
+  render();
+</script>
+</body>
+</html>

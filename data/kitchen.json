@@ -1,0 +1,12 @@
+[
+  { "id": "k1-clorox-wipes", "name": "Clorox wipes", "room": "Kitchen", "spot": "Under the sink", "spot_label": "K1", "status": "Stocked" },
+  { "id": "k1-dish-soap", "name": "Dish soap", "room": "Kitchen", "spot": "Under the sink", "spot_label": "K1", "status": "Stocked" },
+  { "id": "k1-dishwasher-detergent", "name": "Dishwasher detergent", "room": "Kitchen", "spot": "Under the sink", "spot_label": "K1", "status": "Stocked" },
+  { "id": "k1-trash-bags", "name": "Trash bags", "room": "Kitchen", "spot": "Under the sink", "spot_label": "K1", "status": "Stocked" },
+  { "id": "k2-toilet-paper", "name": "Toilet paper", "room": "Kitchen", "spot": "Cabinet above the fridge", "spot_label": "K2", "status": "Stocked" },
+  { "id": "k2-paper-towels", "name": "Paper towels", "room": "Kitchen", "spot": "Cabinet above the fridge", "spot_label": "K2", "status": "Stocked" },
+  { "id": "k2-napkins", "name": "Napkins", "room": "Kitchen", "spot": "Cabinet above the fridge", "spot_label": "K2", "status": "Stocked" },
+  { "id": "k2-foil-pans-and-foil", "name": "Foil pans and foil", "room": "Kitchen", "spot": "Cabinet above the fridge", "spot_label": "K2", "status": "Stocked" },
+  { "id": "k3-colonial-signature-blend-coffee", "name": "Colonial Signature Blend coffee", "room": "Kitchen", "spot": "Coffee drawer", "spot_label": "K3", "status": "Stocked" },
+  { "id": "k3-lion-toasted-coconut-coffee", "name": "Lion Toasted Coconut coffee", "room": "Kitchen", "spot": "Coffee drawer", "spot_label": "K3", "status": "Stocked" }
+]
